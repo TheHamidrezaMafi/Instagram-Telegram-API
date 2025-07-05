@@ -1,6 +1,6 @@
-# MegaChat MiniApp
+# Instagram-Telegram-API
 
-MegaChat MiniApp is a Django-powered Telegram WebApp that connects with your Instagram account to bring your DMs, profile insights, subscription management, and advanced chat analysis right into Telegram — all in one seamless interface.
+Instagram-Telegram-API MiniApp is a Django-powered Telegram WebApp that connects with your Instagram account to bring your DMs, profile insights, subscription management, and advanced chat analysis right into Telegram — all in one seamless interface.
 
 ---
 
