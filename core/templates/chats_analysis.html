@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat Analysis</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --menu-height: 60px;
+        }
+
+        body {
+            margin: 0;
+            font-family: sans-serif;
+            background-color: var(--tg-theme-bg-color, #f0f0f0);
+            color: var(--tg-theme-text-color, #000000);
+            padding-bottom: var(--menu-height);
+        }
+
+        .page {
+            padding: 1.5rem 1.5rem calc(var(--menu-height) + 1.5rem);
+        }
+
+        h2 {
+            margin-bottom: 1rem;
+        }
+
+        .selectors {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        select {
+            flex: 1;
+            padding: 10px;
+            border-radius: 10px;
+            border: 1px solid #ccc;
+            font-size: 16px;
+        }
+
+        .section-title {
+            margin: 25px 0 10px;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .card-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .emotion-card {
+            background: white;
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            transition: 0.2s ease-in-out;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+
+        .emotion-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+        }
+
+        .emotion-title {
+            font-weight: bold;
+            font-size: 18px;
+            margin-bottom: 6px;
+            color: #0077ff;
+        }
+
+        .emotion-summary {
+            font-size: 14px;
+            color: #333;
+        }
+
+        .menu-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: var(--menu-height);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: linear-gradient(to right, #0077ff, #00c6ff);
+            color: white;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            font-size: 0.95rem;
+        }
+
+        .menu-button {
+            flex: 1;
+            text-align: center;
+            cursor: pointer;
+            padding: 0.75rem 0;
+            transition: background 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-weight: bold;
+        }
+
+        .menu-button:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .menu-button .label {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+    <h2>Chats Analysis</h2>
+
+    <div class="selectors">
+        <select id="emotionSelector">
+            <option value="">Select Emotion</option>
+            {% for emotion in emotions %}
+                <option value="{{ emotion.slug }}">{{ emotion.name }}</option>
+            {% endfor %}
+        </select>
+        <select id="categorySelector">
+            <option value="">Select Category</option>
+            {% for category in categories %}
+                <option value="{{ category.slug }}">{{ category.name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+
+    {% if emotions %}
+    <div class="section-title">Emotions</div>
+    <div class="card-group">
+        {% for emotion in emotions %}
+        <a href="/chat-analysis/{{ emotion.slug }}/?telegram_id={{ request.GET.telegram_id }}" class="emotion-card">
+            <div class="emotion-title">{{ emotion.name }} ({{ emotion.count }} messages)</div>
+            <div class="emotion-summary">"{{ emotion.example }}"</div>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if categories %}
+    <div class="section-title">Categories</div>
+    <div class="card-group">
+        {% for category in categories %}
+        <a href="/chat-analysis/{{ category.slug }}/?telegram_id={{ request.GET.telegram_id }}" class="emotion-card">
+            <div class="emotion-title">{{ category.name }} ({{ category.count }} messages)</div>
+            <div class="emotion-summary">"{{ category.example }}"</div>
+        </a>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<div class="menu-bar">
+    <div class="menu-button" onclick="goToChats()">
+        💬<span class="label">Chats</span>
+    </div>
+    <div class="menu-button" onclick="goToProfile()">
+        👤<span class="label">Profile</span>
+    </div>
+    <div class="menu-button" onclick="goToStatistics()">
+        📊<span class="label">Statistics</span>
+    </div>
+</div>
+
+<script>
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
+
+    function getTelegramId() {
+        const tg = Telegram.WebApp;
+        return tg.initDataUnsafe?.user?.id || "{{ request.GET.telegram_id|default:'test_telegram_id' }}";
+    }
+
+    function goToChats() {
+        window.location.href = `/chats/?telegram_id=${getTelegramId()}`;
+    }
+
+    function goToProfile() {
+        window.location.href = `/profile/?telegram_id=${getTelegramId()}`;
+    }
+
+    function goToStatistics() {
+        window.location.href = `/statistics/?telegram_id=${getTelegramId()}`;
+    }
+</script>
+</body>
+</html>

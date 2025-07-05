@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Subscribe - MegaChat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --menu-height: 60px;
+    }
+
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--tg-theme-bg-color, #f8f9fa);
+      color: var(--tg-theme-text-color, #212529);
+      padding-bottom: var(--menu-height);
+    }
+
+    .container {
+      padding: 2rem 1.5rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 2rem;
+      font-size: 1.8rem;
+      color: #0077ff;
+    }
+
+    .plans {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .plan {
+      background-color: white;
+      border-radius: 15px;
+      padding: 1.2rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border: 2px solid transparent;
+    }
+
+    .plan:hover {
+      transform: translateY(-4px);
+    }
+
+    .plan.selected {
+      border-color: #00aaff;
+      box-shadow: 0 0 20px rgba(0, 170, 255, 0.3);
+    }
+
+    .plan-title {
+      font-size: 1.3rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+      color: #0077ff;
+    }
+
+    .plan-attribute {
+      font-size: 0.95rem;
+      margin: 0.35rem 0;
+      color: #333;
+    }
+
+    .input-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 0.95rem;
+      margin-bottom: 0.4rem;
+      font-weight: 500;
+    }
+
+    .input-group input,
+    .input-group select {
+      width: 100%;
+      padding: 0.65rem;
+      font-size: 1rem;
+      border-radius: 10px;
+      border: 1px solid #ccc;
+      background: #fff;
+    }
+
+    button {
+      font-family: inherit;
+    }
+
+    .summary {
+      background: #ffffff;
+      padding: 1.2rem;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.07);
+      margin-bottom: 2rem;
+    }
+
+    .summary h3 {
+      margin: 0.5rem 0;
+      color: #333;
+    }
+
+    .purchase-btn {
+      display: block;
+      width: 100%;
+      padding: 0.9rem;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border: none;
+      background: linear-gradient(to right, #0077ff, #00c6ff);
+      color: white;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+
+    .purchase-btn:hover {
+      background: linear-gradient(to right, #005dc1, #00aaff);
+    }
+
+    .menu-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: var(--menu-height, 60px);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      background: linear-gradient(to right, #0077ff, #00c6ff);
+      color: white;
+      border-top-left-radius: 15px;
+      border-top-right-radius: 15px;
+      box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      font-size: 0.95rem;
+    }
+
+    .menu-button {
+      flex: 1;
+      text-align: center;
+      cursor: pointer;
+      padding: 0.75rem 0;
+      transition: background 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-weight: bold;
+    }
+
+    .menu-button .label {
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+    }
+
+    .menu-button:active {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .input-group button {
+      margin-top: 0.5rem;
+      width: 100%;
+      padding: 0.6rem;
+      border: none;
+      background-color: #0077ff;
+      color: white;
+      font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+
+    .input-group button:hover {
+      background-color: #005dc1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>Select Your Subscription Plan</h2>
+
+    <div class="plans" id="plans-container">
+      {% for plan in plans %}
+      <div class="plan" onclick="selectPlan('{{ plan.name }}')" data-plan="{{ plan.name }}" data-price="{{ plan.price }}">
+        <div class="plan-title">{{ plan.name }}</div>
+        <div class="plan-attribute">Chats: {{ plan.chat_count }}</div>
+        <div class="plan-attribute">Top Items: {{ plan.most_liked }}</div>
+        <div class="plan-attribute">Emotions: {{ plan.emotions }}</div>
+        <div class="plan-attribute">Time: {{ plan.time }}</div>
+        <div class="plan-attribute">Price: ${{ plan.price }}</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="input-group">
+      <label for="duration">Select Duration (Months):</label>
+      <select id="duration" onchange="updateFinalPrice()">
+        <option value="1">1 Month</option>
+        <option value="3">3 Months</option>
+        <option value="6">6 Months</option>
+        <option value="12">12 Months</option>
+      </select>
+    </div>
+
+    <div class="input-group">
+      <label for="discount">Discount Code:</label>
+      <input type="text" id="discount" placeholder="Enter code" />
+      <button onclick="applyDiscount()">Apply Discount</button>
+    </div>
+
+    <div class="summary" id="summary">
+      <h3>Selected Plan: <span id="selected-plan-name">None</span></h3>
+      <h3>Final Price: $<span id="final-price">0</span></h3>
+    </div>
+
+    <button class="purchase-btn" onclick="purchase()">Purchase</button>
+  </div>
+
+  <div class="menu-bar">
+    <div class="menu-button" onclick="goToChats()">💬<span class="label">Chats</span></div>
+    <div class="menu-button" onclick="goToProfile()">👤<span class="label">Profile</span></div>
+    <div class="menu-button" onclick="goToStatistics()">📊<span class="label">Statistics</span></div>
+  </div>
+
+  <script>
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
+
+    let selectedPlan = null;
+    let basePrice = 0;
+    let discountPercent = 0;
+
+    function selectPlan(planName) {
+      document.querySelectorAll(".plan").forEach((p) => {
+        p.classList.remove("selected");
+        if (p.dataset.plan === planName) {
+          p.classList.add("selected");
+          selectedPlan = planName;
+          basePrice = parseFloat(p.dataset.price);
+        }
+      });
+      updateFinalPrice();
+    }
+
+    function updateFinalPrice() {
+      const months = parseInt(document.getElementById("duration").value);
+      let finalPrice = basePrice * months;
+      finalPrice -= finalPrice * (discountPercent / 100);
+      document.getElementById("final-price").textContent = finalPrice.toFixed(2);
+      document.getElementById("selected-plan-name").textContent = selectedPlan || "None";
+    }
+
+    function applyDiscount() {
+      const code = document.getElementById("discount").value.trim();
+      if (code === "MEGA20") {
+        discountPercent = 20;
+      } else {
+        discountPercent = 0;
+      }
+      updateFinalPrice();
+    }
+
+    function purchase() {
+      if (!selectedPlan) {
+        alert("Please select a plan.");
+        return;
+      }
+      const months = document.getElementById("duration").value;
+      const code = document.getElementById("discount").value.trim();
+      const finalPrice = document.getElementById("final-price").textContent;
+      window.location.href = `/purchase?plan=${selectedPlan}&months=${months}&code=${code}&price=${finalPrice}`;
+    }
+
+    function goToChats() {
+            let tg, user;
+            try {
+                tg = Telegram.WebApp;
+                user = tg.initDataUnsafe?.user;
+            } catch (e) {
+                console.error("Telegram WebApp not available:", e);
+            }
+
+            if (!user || !user.id) {
+                user = {
+                    id: "test_telegram_id",
+                    first_name: "Test",
+                    last_name: "User",
+                    username: "test_username"
+                };
+            }
+            window.location.href = `/chats/?telegram_id=${user.id}`;
+        }
+
+        function goToProfile() {
+            let tg, user;
+            try {
+                tg = Telegram.WebApp;
+                user = tg.initDataUnsafe?.user;
+            } catch (e) {
+                console.error("Telegram WebApp not available:", e);
+            }
+
+            if (!user || !user.id) {
+                user = {
+                    id: "test_telegram_id",
+                    first_name: "Test",
+                    last_name: "User",
+                    username: "test_username"
+                };
+            }
+            window.location.href = `/profile/?telegram_id=${user.id}`;
+        }
+
+        function goToStatistics() {
+            let tg, user;
+            try {
+                tg = Telegram.WebApp;
+                user = tg.initDataUnsafe?.user;
+            } catch (e) {
+                console.error("Telegram WebApp not available:", e);
+            }
+
+            if (!user || !user.id) {
+                user = {
+                    id: "test_telegram_id",
+                    first_name: "Test",
+                    last_name: "User",
+                    username: "test_username"
+                };
+            }
+            window.location.href = `/statistics/?telegram_id=${user.id}`;
+        }
+  </script>
+</body>
+</html>

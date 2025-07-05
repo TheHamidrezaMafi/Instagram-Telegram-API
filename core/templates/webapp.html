@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MegaChat - Loading</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--tg-theme-bg-color, #f0f0f0);
+            color: var(--tg-theme-text-color, #000);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loader {
+            text-align: center;
+        }
+
+        .loader h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 5px solid rgba(0, 0, 0, 0.1);
+            border-top-color: #1e90ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="loader">
+        <h1>MegaChat</h1>
+        <div class="spinner"></div>
+        <p>Checking your login status...</p>
+    </div>
+
+    <script>
+        Telegram.WebApp.ready();
+        let tg, user;
+            try {
+                tg = Telegram.WebApp;
+                user = tg.initDataUnsafe?.user;
+            } catch (e) {
+                console.error("Telegram WebApp not available:", e);
+            }
+
+            if (!user || !user.id) {
+                user = {
+                    id: "test_telegram_id",
+                    first_name: "Test",
+                    last_name: "User",
+                    username: "test_username"
+                };
+            }
+            window.location.href = `/login/?telegram_id=${user.id}`;
+
+    </script>
+</body>
+</html>

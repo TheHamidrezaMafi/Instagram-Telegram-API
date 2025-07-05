@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat with {{ chat.participants|join:", " }}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            background-color: white;
+            border-left: 1px solid #ddd;
+            border-right: 1px solid #ddd;
+            height: 100vh;
+            position: relative;
+        }
+
+        .chat-header-wrapper {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            max-width: 600px;
+            z-index: 10;
+            background-color: white;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .back-link {
+            padding: 12px 16px;
+            font-size: 14px;
+            color: #007aff;
+            cursor: pointer;
+            background-color: white;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .chat-header {
+            padding: 16px;
+            font-size: 18px;
+            font-weight: bold;
+            background-color: #fff;
+            text-align: center;
+            color: #1d3557;
+        }
+
+        .messages {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 12px;
+            overflow-y: auto;
+            margin-top: 92px; /* height of back-link + header */
+        }
+
+        .message {
+            max-width: 80%;
+            margin-bottom: 10px;
+            padding: 10px 14px;
+            border-radius: 20px;
+            font-size: 14px;
+            line-height: 1.4;
+            word-wrap: break-word;
+            display: inline-block;
+        }
+
+        .left {
+            align-self: flex-start;
+            background-color: #e6f3ff;
+            border-bottom-left-radius: 4px;
+            margin-right: auto;
+        }
+
+        .right {
+            align-self: flex-end;
+            background-color: #a3d4f7;
+            border-bottom-right-radius: 4px;
+            margin-left: auto;
+        }
+
+        .message-meta {
+            font-size: 10px;
+            color: #888;
+            margin-top: 4px;
+            text-align: right;
+        }
+
+        .message img,
+        .message video,
+        .message audio {
+            max-width: 100%;
+            margin-top: 8px;
+            border-radius: 12px;
+        }
+    </style>
+</head>
+<body>
+<div class="chat-container">
+
+    <div class="chat-header-wrapper">
+        <div class="back-link" onclick="goToChats()">← Back to Chats</div>
+        <div class="chat-header">{{ chat.participants|join:", " }}</div>
+    </div>
+
+    <div class="messages" id="messagesContainer">
+        {% for message in messages reversed %}
+            <div class="message {% if message.sender_id == user_id %}right{% else %}left{% endif %}">
+                {% if message.text %}
+                    <div>{{ message.text }}</div>
+                {% endif %}
+
+                {% if message.media_type == "photo" %}
+                    <img src="{{ message.media_url }}" alt="Photo">
+                {% elif message.media_type == "video" %}
+                    <video controls>
+                        <source src="{{ message.media_url }}" type="video/mp4">
+                    </video>
+                {% elif message.media_type == "audio" %}
+                    <audio controls>
+                        <source src="{{ message.media_url }}" type="audio/mpeg">
+                    </audio>
+                {% elif message.media_type == "post" %}
+                    <img src="{% url 'proxy_image' %}?url={{ message.media_url|urlencode }}" alt="Image">
+                {% elif message.media_type == "reel" %}
+                    <a href="{{ message.media_url }}" target="_blank">View Reel</a>
+                {% elif message.media_type == "story" %}
+                    <a href="{{ message.media_url }}" target="_blank">View Story</a>
+                {% endif %}
+
+                <div class="message-meta">{{ message.timestamp }}</div>
+            </div>
+        {% empty %}
+            <p style="text-align:center; color: #999;">No messages in this chat yet.</p>
+        {% endfor %}
+        <div id="bottom-anchor"></div>
+    </div>
+</div>
+
+<script>
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
+
+    function goToChats() {
+        let tg, user;
+        try {
+            tg = Telegram.WebApp;
+            user = tg.initDataUnsafe?.user;
+        } catch (e) {
+            console.error("Telegram WebApp not available:", e);
+        }
+
+        if (!user || !user.id) {
+            user = {
+                id: "test_telegram_id"
+            };
+        }
+        window.location.href = `/chats/?telegram_id=${user.id}`;
+    }
+
+    // Scroll to bottom on load
+    window.addEventListener("load", () => {
+        const bottom = document.getElementById("bottom-anchor");
+        if (bottom) {
+            bottom.scrollIntoView({ behavior: "auto" });
+        }
+    });
+</script>
+</body>
+</html>

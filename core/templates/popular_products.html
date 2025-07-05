@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Popular Products - MegaChat</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --menu-height: 60px;
+    }
+
+    body {
+      margin: 0;
+      font-family: sans-serif;
+      background-color: var(--tg-theme-bg-color, #f0f0f0);
+      color: var(--tg-theme-text-color, #000000);
+      padding-bottom: var(--menu-height);
+    }
+
+    .page {
+      display: block;
+      padding: 1rem;
+    }
+
+    h2 {
+      text-align: center;
+      color: #0077ff;
+    }
+
+    .chart-container {
+      background-color: white;
+      border-radius: 15px;
+      padding: 1rem;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+      max-width: 100%;
+      margin: auto;
+    }
+
+    canvas {
+      max-width: 100%;
+    }
+
+    .tabs {
+      display: flex;
+      justify-content: space-around;
+      margin: 1rem 0;
+      flex-wrap: wrap;
+    }
+
+    .tab-button {
+      background-color: #f0f0f0;
+      border: none;
+      padding: 0.5rem 1rem;
+      margin: 0.3rem;
+      font-size: 0.9rem;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .tab-button.active {
+      background: linear-gradient(to right, #0077ff, #00c6ff);
+      color: white;
+      font-weight: bold;
+    }
+
+    .details {
+      background-color: white;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-top: 1rem;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    .menu-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: var(--menu-height, 60px);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      background: linear-gradient(to right, #0077ff, #00c6ff);
+      color: white;
+      border-top-left-radius: 15px;
+      border-top-right-radius: 15px;
+      box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      font-size: 0.95rem;
+    }
+
+    .menu-button {
+      flex: 1;
+      text-align: center;
+      cursor: pointer;
+      padding: 0.75rem 0;
+      transition: background 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      font-weight: bold;
+    }
+
+    .menu-button:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+      border-radius: 10px;
+    }
+
+    .menu-button .label {
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="page">
+    <h2>Most Popular Products</h2>
+
+    <div class="chart-container">
+      <canvas id="popularPieChart"></canvas>
+    </div>
+
+    <h2>View Details</h2>
+    <div class="tabs">
+      <button class="tab-button active" onclick="switchTab(this, 'electronics')">Electronics</button>
+      <button class="tab-button" onclick="switchTab(this, 'clothing')">Clothing</button>
+      <button class="tab-button" onclick="switchTab(this, 'books')">Books</button>
+    </div>
+
+    <div id="electronics" class="details">
+      <p>📱 Smart Phone X10 – Stock: 150 units</p>
+      <p>💻 Laptop Z200 – Rating: 4.8 out of 5</p>
+    </div>
+
+    <div id="clothing" class="details" style="display: none;">
+      <p>👗 Dress A20 – Stock: 75 units</p>
+      <p>🧥 Jacket B12 – Rating: 4.5 out of 5</p>
+    </div>
+
+    <div id="books" class="details" style="display: none;">
+      <p>📘 Book "Learn JS" – Stock: 200 units</p>
+      <p>📙 Book "Python Basics" – Rating: 4.7 out of 5</p>
+    </div>
+  </div>
+
+  <div class="menu-bar">
+    <div class="menu-button" onclick="goToChats()">💬<span class="label">Chats</span></div>
+    <div class="menu-button" onclick="goToProfile()">👤<span class="label">Profile</span></div>
+    <div class="menu-button" onclick="goToStatistics()">📊<span class="label">Statistics</span></div>
+  </div>
+
+  <script>
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
+
+    function goToChats() {
+      let tg = Telegram.WebApp;
+      let user = tg.initDataUnsafe?.user || { id: "test_telegram_id" };
+      window.location.href = `/chats/?telegram_id=${user.id}`;
+    }
+
+    function goToProfile() {
+      let tg = Telegram.WebApp;
+      let user = tg.initDataUnsafe?.user || { id: "test_telegram_id" };
+      window.location.href = `/profile/?telegram_id=${user.id}`;
+    }
+
+    function goToStatistics() {
+      let tg = Telegram.WebApp;
+      let user = tg.initDataUnsafe?.user || { id: "test_telegram_id" };
+      window.location.href = `/statistics/?telegram_id=${user.id}`;
+    }
+
+    function switchTab(button, id) {
+      document.querySelectorAll(".tab-button").forEach(btn => btn.classList.remove("active"));
+      button.classList.add("active");
+
+      document.querySelectorAll(".details").forEach(d => d.style.display = "none");
+      document.getElementById(id).style.display = "block";
+    }
+
+    const ctx = document.getElementById('popularPieChart').getContext('2d');
+    const popularChart = new Chart(ctx, {
+      type: 'pie',
+      data: {
+        labels: ['Electronics', 'Clothing', 'Books'],
+        datasets: [{
+          data: [25, 40, 35],
+          backgroundColor: ['#007bff', '#e83e8c', '#28a745'],
+          borderWidth: 1
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom' }
+        }
+      }
+    });
+  </script>
+</body>
+</html>

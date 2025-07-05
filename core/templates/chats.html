@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chats - MegaChat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        :root {
+            --menu-height: 60px;
+        }
+
+        body {
+            margin: 0;
+            font-family: sans-serif;
+            background-color: var(--tg-theme-bg-color, #f0f0f0);
+            color: var(--tg-theme-text-color, #000000);
+            padding-bottom: var(--menu-height);
+        }
+
+        .page {
+            display: none;
+            padding: 1.5rem 1.5rem calc(var(--menu-height) + 1.5rem);
+        }
+
+        .page.active {
+            display: block;
+        }
+
+        .chat-card {
+            display: flex;
+            align-items: center;
+            background-color: white;
+            border-radius: 15px;
+            padding: 12px 16px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+        }
+
+        .chat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.12);
+        }
+
+        .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            margin-right: 15px;
+            object-fit: cover;
+        }
+
+        .chat-details {
+            flex: 1;
+        }
+
+        .chat-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1d3557;
+            margin-bottom: 4px;
+        }
+
+        .last-message {
+            font-size: 14px;
+            color: #555;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            word-break: break-word;
+        }
+
+        .unread-dot {
+            width: 10px;
+            height: 10px;
+            background-color: #007aff;
+            border-radius: 50%;
+            margin-left: 8px;
+        }
+
+        .unread-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .error-message {
+            text-align: center;
+            padding: 30px;
+            font-size: 18px;
+            color: #999;
+        }
+
+        .menu-bar {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: var(--menu-height, 60px);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            background: linear-gradient(to right, #0077ff, #00c6ff);
+            color: white;
+            border-top-left-radius: 15px;
+            border-top-right-radius: 15px;
+            box-shadow: 0 -3px 10px rgba(0, 0, 0, 0.15);
+            z-index: 1000;
+            font-size: 0.95rem;
+        }
+
+        .menu-button {
+            flex: 1;
+            text-align: center;
+            cursor: pointer;
+            padding: 0.75rem 0;
+            transition: background 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-weight: bold;
+        }
+
+        .menu-button:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .menu-button .label {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+        }
+        .floating-analysis-btn {
+            position: fixed;
+            bottom: calc(var(--menu-height) + 20px); /* Right above the menu */
+            right: 20px;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            background: linear-gradient(to right, #0077ff, #00c6ff);
+            color: white;
+            font-size: 24px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+            z-index: 1100;
+            cursor: pointer;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+
+        .floating-analysis-btn:hover {
+            background: linear-gradient(to right, #005dc1, #00aaff);
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+
+<div class="page active" id="page-chats">
+    <h2>Direct Messages</h2>
+
+    {% if error %}
+        <div class="error-message">{{ error }}</div>
+    {% else %}
+        {% for chat in chats %}
+            <div class="chat-card" onclick="openChat('{{ chat.thread_id }}')">
+                {% if chat.profile_pic_url %}
+                    <img class="avatar" src="{{ chat.profile_pic_url }}">
+                {% else %}
+                    <img class="avatar" src="https://via.placeholder.com/50">
+                {% endif %}
+
+                <div class="chat-details">
+                    <div class="unread-container">
+                        <div class="chat-title">
+                            {{ chat.participants|join:", " }}
+                        </div>
+                        {% if chat.unread_count %}
+                            <div class="unread-dot"></div>
+                        {% endif %}
+                    </div>
+                    <div class="last-message">
+                        {% if chat.last_message.text %}
+                            {{ chat.last_message.text }}
+                        {% else %}
+                            <em>No text message</em>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    {% endif %}
+</div>
+
+<div class="menu-bar">
+    <div class="menu-button" onclick="goToChats()">
+      💬<span class="label">Chats</span>
+    </div>
+    <div class="menu-button" onclick="goToProfile()">
+      👤<span class="label">Profile</span>
+    </div>
+    <div class="menu-button" onclick="goToStatistics()">
+      📊<span class="label">Statistics</span>
+    </div>
+  </div>
+<div class="floating-analysis-btn" onclick="goToChatAnalysis()">
+    🔍
+</div>
+<script>
+    Telegram.WebApp.ready();
+    Telegram.WebApp.expand();
+
+    function openChat(threadId) {
+        const urlParams = new URLSearchParams(window.location.search);
+        const telegramId = urlParams.get("telegram_id");
+        window.location.href = `/chat/${threadId}/?telegram_id=${telegramId}`;
+    }
+
+    function goToChats() {
+      let tg, user;
+      try {
+        tg = Telegram.WebApp;
+        user = tg.initDataUnsafe?.user;
+      } catch (e) {
+        console.error("Telegram WebApp not available:", e);
+      }
+
+      if (!user || !user.id) {
+        user = {
+          id: "test_telegram_id",
+          first_name: "Test",
+          last_name: "User",
+          username: "test_username"
+        };
+      }
+      window.location.href = `/chats/?telegram_id=${user.id}`;
+    }
+    function goToProfile() {
+            let tg, user;
+            try {
+                tg = Telegram.WebApp;
+                user = tg.initDataUnsafe?.user;
+            } catch (e) {
+                console.error("Telegram WebApp not available:", e);
+            }
+
+            if (!user || !user.id) {
+                user = {
+                    id: "test_telegram_id",
+                    first_name: "Test",
+                    last_name: "User",
+                    username: "test_username"
+                };
+            }
+            window.location.href = `/profile/?telegram_id=${user.id}`;
+        }
+        function goToStatistics() {
+            let tg, user;
+            try {
+                tg = Telegram.WebApp;
+                user = tg.initDataUnsafe?.user;
+            } catch (e) {
+                console.error("Telegram WebApp not available:", e);
+            }
+
+            if (!user || !user.id) {
+                user = {
+                    id: "test_telegram_id",
+                    first_name: "Test",
+                    last_name: "User",
+                    username: "test_username"
+                };
+            }
+            window.location.href = `/statistics/?telegram_id=${user.id}`;
+        }
+        function goToChatAnalysis() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const telegramId = urlParams.get("telegram_id");
+            window.location.href = `/chats/analysis/?telegram_id=${telegramId}`;
+        }
+</script>
+</body>
+</html>

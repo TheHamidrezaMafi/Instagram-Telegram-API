@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - MegaChat</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--tg-theme-bg-color, #f0f0f0);
+            color: var(--tg-theme-text-color, #000);
+        }
+
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 2rem;
+        }
+
+        .header h2 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: #666;
+        }
+
+        .login-form {
+            width: 100%;
+            max-width: 400px;
+            background: #fff;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .login-form input {
+            width: 100%;
+            padding: 0.75rem;
+            margin: 0.75rem 0;
+            border: 1px solid #ccc;
+            border-radius: 10px;
+            font-size: 1rem;
+        }
+
+        .login-button {
+            background-color: var(--tg-theme-button-color, #1e90ff);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            border-radius: 10px;
+            padding: 0.75rem;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        .login-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>MegaChat</h1>
+            <h2>Instagram Login</h2>
+        </div>
+
+        <div class="login-form">
+            <input type="text" id="username" placeholder="Username">
+            <input type="password" id="password" placeholder="Password">
+            <input type="text" id="code" placeholder="Confirmation Code" style="display: none;">
+            <button class="login-button" id="loginButton" onclick="submitLogin()">Login</button>
+        </div>
+    </div>
+
+    <script>
+        Telegram.WebApp.ready();
+        Telegram.WebApp.expand();
+
+        let codeRequested = false;
+
+        function submitLogin() {
+            const username = document.getElementById("username").value;
+            const password = document.getElementById("password").value;
+            const code = document.getElementById("code").value;
+            const loginButton = document.getElementById("loginButton");
+
+            loginButton.disabled = true;
+            loginButton.textContent = "Logging in, please wait...";
+
+            let tg, user;
+            try {
+                tg = Telegram.WebApp;
+                user = tg.initDataUnsafe?.user;
+            } catch (e) {
+                console.error("Telegram WebApp not available:", e);
+            }
+
+            if (!user || !user.id) {
+                user = {
+                    id: "test_telegram_id",
+                    first_name: "Test",
+                    last_name: "User",
+                    username: "test_username"
+                };
+            }
+
+            const loginData = {
+                username,
+                password,
+                code: codeRequested ? code : undefined,
+                telegram_id: user.id,
+                telegram_first_name: user.first_name,
+                telegram_last_name: user.last_name,
+                telegram_username: user.username,
+            };
+
+            fetch(`/instagram-login/?telegram_id=${user.id}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(loginData)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    window.location.href = data.redirect;
+                } else if (data.status === 'code_required') {
+                    document.getElementById("code").style.display = "block";
+                    codeRequested = true;
+                    alert("A confirmation code is required. Please enter it.");
+                    loginButton.textContent = "Login";
+                    loginButton.disabled = false;
+                } else {
+                    alert('Login failed. Please check your credentials.');
+                    loginButton.textContent = "Login";
+                    loginButton.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                loginButton.textContent = "Login";
+                loginButton.disabled = false;
+            });
+        }
+    </script>
+</body>
+</html>
